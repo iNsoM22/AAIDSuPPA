@@ -1,0 +1,7 @@
+add_executable(test_similarity test_similarity.cpp)
+target_link_libraries(test_similarity PRIVATE engine_lib)
+add_test(NAME test_similarity COMMAND test_similarity)
+
+add_executable(test_comparators test_comparators.cpp)
+target_link_libraries(test_comparators PRIVATE engine_lib)
+add_test(NAME test_comparators COMMAND test_comparators)

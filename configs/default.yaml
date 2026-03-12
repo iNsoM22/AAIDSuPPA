@@ -1,0 +1,26 @@
+engine:
+  binary_path: "cpp/build/engine"
+  timeout_seconds: 300
+
+embeddings:
+  model: "all-MiniLM-L6-v2"
+  cache_dir: "data/embeddings_cache"
+  batch_size: 64
+
+similarity:
+  threshold: 0.85
+  metric: "cosine"
+
+openmp:
+  num_threads: 0
+  schedule: "dynamic"
+  chunk_size: 32
+
+benchmark:
+  dataset_sizes: [100, 500, 1000, 5000]
+  runs_per_size: 3
+  warmup_runs: 1
+
+output:
+  results_dir: "data/outputs"
+  report_format: "json"

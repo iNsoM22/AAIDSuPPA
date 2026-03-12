@@ -39,3 +39,10 @@
 
 # debug information files
 *.dwo
+
+# Project build and runtime artifacts
+cpp/build/
+.venv/
+__pycache__/
+*.pyc
+data/uploads/
