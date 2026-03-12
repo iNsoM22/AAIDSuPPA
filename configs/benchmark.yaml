@@ -1,0 +1,5 @@
+benchmark:
+  dataset_sizes: [100, 500, 1000, 5000]
+  runs_per_size: 3
+  warmup_runs: 1
+  threads: [1, 2, 4, 8, 16]

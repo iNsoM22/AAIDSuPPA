@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h1>Automated Academic Integrity Detection</h1>
+  <label for="csvFile">Upload CSV</label>
+  <input id="csvFile" type="file" accept=".csv" />
+  <button onclick="uploadAnswers()">Upload</button>
+  <div id="uploadSummary">No upload yet.</div>
+</div>
+
+<div class="card">
+  <label for="mode">Mode</label>
+  <select id="mode">
+    <option value="serial">Serial</option>
+    <option value="omp">OpenMP</option>
+  </select>
+
+  <label for="threshold">Similarity Threshold</label>
+  <input id="threshold" type="number" min="0.5" max="1.0" step="0.01" value="0.85" />
+
+  <div id="ompConfig">
+    <label for="threads">Threads</label>
+    <input id="threads" type="number" min="0" value="0" />
+
+    <label for="schedule">Schedule</label>
+    <select id="schedule">
+      <option value="dynamic">dynamic</option>
+      <option value="static">static</option>
+      <option value="guided">guided</option>
+    </select>
+
+    <label for="chunk">Chunk Size</label>
+    <input id="chunk" type="number" min="1" value="32" />
+  </div>
+
+  <button onclick="runAnalysis()">Analyze</button>
+
+  <progress id="progress" max="100" value="0"></progress>
+  <div id="runStatus">Status: idle</div>
+</div>
+
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
