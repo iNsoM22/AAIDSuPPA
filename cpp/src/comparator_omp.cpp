@@ -27,7 +27,8 @@ ResultList run_omp(const EmbeddingMatrix& embeddings,
     }
     omp_set_schedule(sched_kind, config.chunk_size);
 
-    std::vector<ResultList> thread_results(omp_get_max_threads());
+    const int max_threads = config.num_threads > 0 ? config.num_threads : omp_get_max_threads();
+    std::vector<ResultList> thread_results(max_threads);
 
 #pragma omp parallel for schedule(runtime) default(none) shared(embeddings, config, n, thread_results)
     for (int i = 0; i < n - 1; ++i) {

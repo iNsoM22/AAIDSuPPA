@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import threading
 import uuid
 from pathlib import Path
 
@@ -11,6 +12,7 @@ upload_bp = Blueprint("upload", __name__)
 _UPLOAD_DIR = Path(__file__).resolve().parents[2] / "data" / "uploads"
 _UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 _UPLOADS: dict[str, str] = {}
+_UPLOADS_LOCK = threading.Lock()
 
 
 def _count_csv(path: Path) -> tuple[int, int]:
@@ -35,7 +37,8 @@ def upload_answers():
     upload_id = str(uuid.uuid4())
     path = _UPLOAD_DIR / f"{upload_id}.csv"
     file.save(path)
-    _UPLOADS[upload_id] = str(path)
+    with _UPLOADS_LOCK:
+        _UPLOADS[upload_id] = str(path)
 
     n_students, n_questions = _count_csv(path)
     return jsonify(
@@ -48,4 +51,5 @@ def upload_answers():
 
 
 def get_upload_path(upload_id: str) -> str | None:
-    return _UPLOADS.get(upload_id)
+    with _UPLOADS_LOCK:
+        return _UPLOADS.get(upload_id)

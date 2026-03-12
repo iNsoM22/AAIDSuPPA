@@ -11,11 +11,13 @@ from web.routes.upload import get_upload_path
 run_bp = Blueprint("run", __name__)
 
 _JOBS: dict[str, dict] = {}
+_JOBS_LOCK = threading.Lock()
 
 
 def _runner(job_id: str, upload_id: str, mode: str, config: dict):
-    _JOBS[job_id]["status"] = "running"
-    _JOBS[job_id]["progress"] = 20
+    with _JOBS_LOCK:
+        _JOBS[job_id]["status"] = "running"
+        _JOBS[job_id]["progress"] = 20
     time.sleep(0.01)
 
     try:
@@ -23,16 +25,19 @@ def _runner(job_id: str, upload_id: str, mode: str, config: dict):
         if not csv_path:
             raise ValueError("invalid upload_id")
 
-        _JOBS[job_id]["progress"] = 60
+        with _JOBS_LOCK:
+            _JOBS[job_id]["progress"] = 60
         from python.pipeline import run_analysis
 
         result = run_analysis(csv_path, mode, config)
-        _JOBS[job_id]["result"] = result
-        _JOBS[job_id]["status"] = "done"
-        _JOBS[job_id]["progress"] = 100
+        with _JOBS_LOCK:
+            _JOBS[job_id]["result"] = result
+            _JOBS[job_id]["status"] = "done"
+            _JOBS[job_id]["progress"] = 100
     except Exception as exc:
-        _JOBS[job_id]["status"] = "error"
-        _JOBS[job_id]["error"] = str(exc)
+        with _JOBS_LOCK:
+            _JOBS[job_id]["status"] = "error"
+            _JOBS[job_id]["error"] = str(exc)
 
 
 @run_bp.post("/analyze")
@@ -52,9 +57,10 @@ def analyze():
         return jsonify({"error": "mode must be serial or omp"}), 400
 
     job_id = str(uuid.uuid4())
-    _JOBS[job_id] = {"status": "pending", "progress": 0, "upload_id": upload_id}
+    with _JOBS_LOCK:
+        _JOBS[job_id] = {"status": "pending", "progress": 0, "upload_id": upload_id}
 
-    thread = threading.Thread(target=_runner, args=(job_id, upload_id, mode, config), daemon=True)
+    thread = threading.Thread(target=_runner, args=(job_id, upload_id, mode, config), daemon=False)
     thread.start()
 
     return jsonify({"job_id": job_id})
@@ -62,7 +68,10 @@ def analyze():
 
 @run_bp.get("/status/<job_id>")
 def status(job_id: str):
-    job = _JOBS.get(job_id)
+    with _JOBS_LOCK:
+        job = _JOBS.get(job_id)
+        if job is not None:
+            job = dict(job)
     if not job:
         return jsonify({"error": "job not found"}), 404
 
@@ -73,4 +82,6 @@ def status(job_id: str):
 
 
 def get_job(job_id: str) -> dict | None:
-    return _JOBS.get(job_id)
+    with _JOBS_LOCK:
+        job = _JOBS.get(job_id)
+        return dict(job) if job is not None else None

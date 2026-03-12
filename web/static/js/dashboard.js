@@ -1,8 +1,13 @@
+const MAX_POLL_ATTEMPTS = 300;
+const BASE_POLL_DELAY_MS = 1000;
+
 async function pollStatus(jobId) {
   const progressEl = document.getElementById('progress');
   const statusEl = document.getElementById('runStatus');
+  let attempts = 0;
 
-  while (true) {
+  while (attempts < MAX_POLL_ATTEMPTS) {
+    attempts += 1;
     const res = await fetch(`/run/status/${jobId}`);
     const payload = await res.json();
 
@@ -23,9 +28,11 @@ async function pollStatus(jobId) {
       statusEl.textContent = `Error: ${payload.error || 'unknown'}`;
       return;
     }
-
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const delayMs = Math.min(BASE_POLL_DELAY_MS + attempts * 10, 3000);
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
   }
+
+  statusEl.textContent = 'Status: timeout while waiting for job completion';
 }
 
 window.runAnalysis = async function runAnalysis() {
